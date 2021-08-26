@@ -26,7 +26,7 @@ type commandOpts struct {
 	Timeout  time.Duration `long:"timeout" default:"10s" description:"Timeout to wait for connection"`
 	Hostname string        `short:"H" long:"hostname" description:"IP address or Host name" default:"127.0.0.1"`
 	Port     int           `short:"p" long:"port" description:"Port number" default:"21"`
-	SSL      bool          `short:"S" long:"ssl" description:"use https"`
+	SSL      bool          `short:"S" long:"ssl" description:"use TLS"`
 	SNI      string        `long:"sni" description:"sepecify hostname for SNI"`
 	Explicit bool          `long:"explicit" description:"Use Explicit TLS mode"`
 	TCP4     bool          `short:"4" description:"use tcp4 only"`

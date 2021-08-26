@@ -1,5 +1,5 @@
 builds:
-  - binary: check_http2
+  - binary: check_ftp2
     goos:
       - darwin
       - linux
