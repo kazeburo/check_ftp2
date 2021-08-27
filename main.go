@@ -71,7 +71,12 @@ func dialOptions(opts commandOpts) []ftp.DialOption {
 			return nil, err
 		}
 		if opts.SSL && !opts.Explicit {
-			conn = tls.Client(conn, tlsConfig)
+			tlsconn := tls.Client(conn, tlsConfig)
+			err = tlsconn.Handshake()
+			if err != nil {
+				return nil, err
+			}
+			return tlsconn, nil
 		}
 		return conn, nil
 	}
