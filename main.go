@@ -22,69 +22,6 @@ const CRITICAL = 2
 const WARNING = 1
 const OK = 0
 
-type commandOpts struct {
-	Timeout  time.Duration `long:"timeout" default:"10s" description:"Timeout to wait for connection"`
-	Hostname string        `short:"H" long:"hostname" description:"IP address or Host name" default:"127.0.0.1"`
-	Port     int           `short:"p" long:"port" description:"Port number" default:"21"`
-	SSL      bool          `short:"S" long:"ssl" description:"use TLS"`
-	SNI      string        `long:"sni" description:"sepecify hostname for SNI"`
-	Explicit bool          `long:"explicit" description:"Use Explicit TLS mode"`
-	TCP4     bool          `short:"4" description:"use tcp4 only"`
-	TCP6     bool          `short:"6" description:"use tcp6 only"`
-	Version  bool          `short:"v" long:"version" description:"Show version"`
-}
-
-func dialOptions(opts commandOpts) []ftp.DialOption {
-	options := []ftp.DialOption{}
-
-	options = append(options, ftp.DialWithTimeout(opts.Timeout))
-
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-	}
-	if opts.SNI != "" {
-		tlsConfig = &tls.Config{
-			InsecureSkipVerify: true,
-			ServerName:         opts.SNI,
-		}
-	}
-
-	if opts.Explicit {
-		options = append(options, ftp.DialWithExplicitTLS(tlsConfig))
-	}
-
-	dialFunc := func(_, _ string) (net.Conn, error) {
-		dialer := &net.Dialer{
-			Timeout:   opts.Timeout,
-			KeepAlive: 30 * time.Second,
-			DualStack: true,
-		}
-		tcpMode := "tcp"
-		if opts.TCP4 {
-			tcpMode = "tcp4"
-		}
-		if opts.TCP6 {
-			tcpMode = "tcp6"
-		}
-		conn, err := dialer.Dial(tcpMode, net.JoinHostPort(opts.Hostname, fmt.Sprintf("%d", opts.Port)))
-		if err != nil {
-			return nil, err
-		}
-		if opts.SSL && !opts.Explicit {
-			tlsconn := tls.Client(conn, tlsConfig)
-			err = tlsconn.Handshake()
-			if err != nil {
-				return nil, err
-			}
-			return tlsconn, nil
-		}
-		return conn, nil
-	}
-	options = append(options, ftp.DialWithDialFunc(dialFunc))
-
-	return options
-}
-
 const replacement = "\\n"
 
 var replacer = strings.NewReplacer(
@@ -99,6 +36,69 @@ func replaceReplacer(s string) string {
 	return replacer.Replace(s)
 }
 
+type Opt struct {
+	Timeout  time.Duration `long:"timeout" default:"10s" description:"Timeout to wait for connection"`
+	Hostname string        `short:"H" long:"hostname" description:"IP address or Host name" default:"127.0.0.1"`
+	Port     int           `short:"p" long:"port" description:"Port number" default:"21"`
+	SSL      bool          `short:"S" long:"ssl" description:"use TLS"`
+	SNI      string        `long:"sni" description:"sepecify hostname for SNI"`
+	Explicit bool          `long:"explicit" description:"Use Explicit TLS mode"`
+	TCP4     bool          `short:"4" description:"use tcp4 only"`
+	TCP6     bool          `short:"6" description:"use tcp6 only"`
+	Version  bool          `short:"v" long:"version" description:"Show version"`
+}
+
+func (o *Opt) dialOptions() []ftp.DialOption {
+	options := []ftp.DialOption{}
+
+	options = append(options, ftp.DialWithTimeout(o.Timeout))
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+	if o.SNI != "" {
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         o.SNI,
+		}
+	}
+
+	if o.Explicit {
+		options = append(options, ftp.DialWithExplicitTLS(tlsConfig))
+	}
+
+	dialFunc := func(_, _ string) (net.Conn, error) {
+		dialer := &net.Dialer{
+			Timeout:   o.Timeout,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}
+		tcpMode := "tcp"
+		if o.TCP4 {
+			tcpMode = "tcp4"
+		}
+		if o.TCP6 {
+			tcpMode = "tcp6"
+		}
+		conn, err := dialer.Dial(tcpMode, net.JoinHostPort(o.Hostname, fmt.Sprintf("%d", o.Port)))
+		if err != nil {
+			return nil, err
+		}
+		if o.SSL && !o.Explicit {
+			tlsconn := tls.Client(conn, tlsConfig)
+			err = tlsconn.Handshake()
+			if err != nil {
+				return nil, err
+			}
+			return tlsconn, nil
+		}
+		return conn, nil
+	}
+	options = append(options, ftp.DialWithDialFunc(dialFunc))
+
+	return options
+}
+
 type reqError struct {
 	msg  string
 	code int
@@ -111,21 +111,22 @@ func (e *reqError) Error() string {
 func (e *reqError) Code() int {
 	return e.code
 }
-func doConnect(opts commandOpts) (string, *reqError) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), opts.Timeout)
+func (o *Opt) doConnect() (string, *reqError) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), o.Timeout)
 	defer cancel()
 	ch := make(chan error, 1)
 	out := ""
 	start := time.Now()
 
 	go func() {
-		dialopts := dialOptions(opts)
+		dialopts := o.dialOptions()
 		b := new(bytes.Buffer)
 		dialopts = append(dialopts, ftp.DialWithDebugOutput(b))
 
 		c, e := ftp.Dial(
-			net.JoinHostPort(opts.Hostname, fmt.Sprintf("%d", opts.Port)),
+			net.JoinHostPort(o.Hostname, fmt.Sprintf("%d", o.Port)),
 			dialopts...,
 		)
 		if e != nil {
@@ -150,22 +151,15 @@ func doConnect(opts commandOpts) (string, *reqError) {
 
 	if err != nil {
 		return "", &reqError{
-			fmt.Sprintf("FTP CRITICAL: %v on %s port %d [%s]", err, opts.Hostname, opts.Port, out),
+			fmt.Sprintf("FTP CRITICAL: %v on %s port %d [%s]", err, o.Hostname, o.Port, out),
 			CRITICAL,
 		}
 
 	}
 
-	okMsg := fmt.Sprintf(`FTP OK - %.3f second response time on %s port %d [%s]|time=%fs;;;0.000000;%f`, duration.Seconds(), opts.Hostname, opts.Port, out, duration.Seconds(), opts.Timeout.Seconds())
+	okMsg := fmt.Sprintf(`FTP OK - %.3f second response time on %s port %d [%s]|time=%fs;;;0.000000;%f`, duration.Seconds(), o.Hostname, o.Port, out, duration.Seconds(), o.Timeout.Seconds())
 
 	return okMsg, nil
-}
-
-func printVersion() {
-	fmt.Printf(`%s Compiler: %s %s`,
-		version,
-		runtime.Compiler,
-		runtime.Version())
 }
 
 func main() {
@@ -173,24 +167,30 @@ func main() {
 }
 
 func _main() int {
-	opts := commandOpts{}
-	psr := flags.NewParser(&opts, flags.Default)
+	opt := &Opt{}
+	psr := flags.NewParser(opt, flags.HelpFlag|flags.PassDoubleDash)
 	_, err := psr.Parse()
+	if opt.Version {
+		fmt.Printf(`%s %s
+Compiler: %s %s
+`,
+			os.Args[0],
+			version,
+			runtime.Compiler,
+			runtime.Version())
+		return 0
+	}
 	if err != nil {
-		os.Exit(UNKNOWN)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		return 1
 	}
 
-	if opts.Version {
-		printVersion()
-		return OK
-	}
-
-	if opts.TCP4 && opts.TCP6 {
+	if opt.TCP4 && opt.TCP6 {
 		fmt.Printf("Both tcp4 and tcp6 are specified\n")
 		return UNKNOWN
 	}
 
-	msg, reqErr := doConnect(opts)
+	msg, reqErr := opt.doConnect()
 	if reqErr != nil {
 		fmt.Println(reqErr.Error())
 		return reqErr.Code()
