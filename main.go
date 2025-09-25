@@ -202,7 +202,7 @@ Compiler: %s %s
 			fmt.Println(ftpErr.Error())
 			return ftpErr.Code()
 		default:
-			fmt.Printf("Unknown error: %v\n", err)
+			fmt.Printf("FTP connection failed with unexpected error: %v\n", err)
 			return CRITICAL
 		}
 	}
