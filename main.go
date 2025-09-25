@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -99,25 +100,29 @@ func (o *Opt) dialOptions() []ftp.DialOption {
 	return options
 }
 
-type reqError struct {
+type ftpError struct {
 	msg  string
 	code int
 }
 
-func (e *reqError) Error() string {
+func (e *ftpError) Error() string {
 	return e.msg
 }
 
-func (e *reqError) Code() int {
+func (e *ftpError) Code() int {
 	return e.code
 }
 
-func (o *Opt) doConnect() (string, *reqError) {
+type ftpConnectResult struct {
+	out string
+	err error
+}
+
+func (o *Opt) doConnect() (string, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), o.Timeout)
 	defer cancel()
-	ch := make(chan error, 1)
-	out := ""
+	ch := make(chan ftpConnectResult, 1)
 	start := time.Now()
 
 	go func() {
@@ -130,34 +135,33 @@ func (o *Opt) doConnect() (string, *reqError) {
 			dialopts...,
 		)
 		if e != nil {
-			ch <- e
+			ch <- ftpConnectResult{"", e}
 			return
 		}
-		out = b.String()
 		defer c.Quit()
-		ch <- nil
+		ch <- ftpConnectResult{b.String(), nil}
 	}()
 
-	var err error
+	var res ftpConnectResult
 	select {
-	case err = <-ch:
+	case res = <-ch:
 		// nothing
 	case <-ctx.Done():
-		err = fmt.Errorf("connection or tls handshake timeout")
+		res = ftpConnectResult{"", fmt.Errorf("connection or tls handshake timeout")}
 	}
 	duration := time.Since(start)
 
-	out = replaceReplacer(out)
+	res.out = replaceReplacer(res.out)
 
-	if err != nil {
-		return "", &reqError{
-			fmt.Sprintf("FTP CRITICAL: %v on %s port %d [%s]", err, o.Hostname, o.Port, out),
-			CRITICAL,
+	if res.err != nil {
+		return "", &ftpError{
+			msg:  fmt.Sprintf("FTP CRITICAL: %v on %s port %d [%s]", res.err, o.Hostname, o.Port, res.out),
+			code: CRITICAL,
 		}
 
 	}
 
-	okMsg := fmt.Sprintf(`FTP OK - %.3f second response time on %s port %d [%s]|time=%fs;;;0.000000;%f`, duration.Seconds(), o.Hostname, o.Port, out, duration.Seconds(), o.Timeout.Seconds())
+	okMsg := fmt.Sprintf(`FTP OK - %.3f second response time on %s port %d [%s]|time=%fs;;;0.000000;%f`, duration.Seconds(), o.Hostname, o.Port, res.out, duration.Seconds(), o.Timeout.Seconds())
 
 	return okMsg, nil
 }
@@ -190,11 +194,19 @@ Compiler: %s %s
 		return UNKNOWN
 	}
 
-	msg, reqErr := opt.doConnect()
-	if reqErr != nil {
-		fmt.Println(reqErr.Error())
-		return reqErr.Code()
+	msg, err := opt.doConnect()
+	if err != nil {
+		var ftpErr *ftpError
+		switch {
+		case errors.As(err, &ftpErr):
+			fmt.Println(ftpErr.Error())
+			return ftpErr.Code()
+		default:
+			fmt.Printf("Unknown error: %v\n", err)
+			return CRITICAL
+		}
 	}
+
 	fmt.Println(msg)
 	return OK
 }
