@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.0.6](https://github.com/kazeburo/check_ftp2/compare/v0.0.5...v0.0.6) - 2025-09-25
+- refactor errors and chan by @kazeburo in https://github.com/kazeburo/check_ftp2/pull/3
+
 ## [v0.0.5](https://github.com/kazeburo/check_ftp2/compare/v0.0.4...v0.0.5) - 2025-09-24
 - use tagpr for release by @kazeburo in https://github.com/kazeburo/check_ftp2/pull/1
 
