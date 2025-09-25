@@ -24,7 +24,10 @@ func Test_replaceReplacer(t *testing.T) {
 }
 
 func Test_ftpError_ErrorAndCode(t *testing.T) {
-	err := &ftpError{"msg", 42}
+	err := &ftpError{
+		msg:  "msg",
+		code: 42,
+	}
 	if err.Error() != "msg" {
 		t.Errorf("Error() = %q, want %q", err.Error(), "msg")
 	}

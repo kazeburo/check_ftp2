@@ -147,7 +147,10 @@ func (o *Opt) doConnect() (string, error) {
 	case res = <-ch:
 		// nothing
 	case <-ctx.Done():
-		res = ftpConnectResult{"", fmt.Errorf("connection or tls handshake timeout")}
+		res = ftpConnectResult{
+			out: "",
+			err: fmt.Errorf("connection or tls handshake timeout"),
+		}
 	}
 	duration := time.Since(start)
 
