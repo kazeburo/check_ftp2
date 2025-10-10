@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.0.7](https://github.com/kazeburo/check_ftp2/compare/v0.0.6...v0.0.7) - 2025-10-10
+- Update main.go by @kazeburo in https://github.com/kazeburo/check_ftp2/pull/5
+
 ## [v0.0.6](https://github.com/kazeburo/check_ftp2/compare/v0.0.5...v0.0.6) - 2025-09-25
 - refactor errors and chan by @kazeburo in https://github.com/kazeburo/check_ftp2/pull/3
 
