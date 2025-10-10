@@ -185,7 +185,7 @@ Compiler: %s %s
 			version,
 			runtime.Compiler,
 			runtime.Version())
-		return 0
+		return OK
 	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
