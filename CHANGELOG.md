@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.0.8](https://github.com/kazeburo/check_ftp2/compare/v0.0.7...v0.0.8) - 2026-02-20
+- add dependabot.yml by @kazeburo in https://github.com/kazeburo/check_ftp2/pull/7
+- ci: bump the dependencies group with 4 updates by @dependabot[bot] in https://github.com/kazeburo/check_ftp2/pull/9
+
 ## [v0.0.7](https://github.com/kazeburo/check_ftp2/compare/v0.0.6...v0.0.7) - 2025-10-10
 - Update main.go by @kazeburo in https://github.com/kazeburo/check_ftp2/pull/5
 
