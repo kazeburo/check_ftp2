@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.0.9](https://github.com/kazeburo/check_ftp2/compare/v0.0.8...v0.0.9) - 2026-07-10
+
+- ci: bump the dependencies group across 1 directory with 3 updates by @dependabot[bot] in https://github.com/kazeburo/check_ftp2/pull/20
+- Update Dependabot schedule and settings by @kazeburo in https://github.com/kazeburo/check_ftp2/pull/22
+- go: bump golang.org/x/sys from 0.36.0 to 0.46.0 in the dependencies group by @dependabot[bot] in https://github.com/kazeburo/check_ftp2/pull/23
+- go: bump golang.org/x/sys from 0.46.0 to 0.47.0 in the dependencies group by @dependabot[bot] in https://github.com/kazeburo/check_ftp2/pull/24
+
 ## [v0.0.8](https://github.com/kazeburo/check_ftp2/compare/v0.0.7...v0.0.8) - 2026-06-05
 
 - add dependabot.yml by @kazeburo in https://github.com/kazeburo/check_ftp2/pull/7
