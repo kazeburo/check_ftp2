@@ -55,3 +55,51 @@ func Test_Opt_doConnect_timeout(t *testing.T) {
 		t.Error("doConnect should return error and empty msg")
 	}
 }
+
+func Test_opt_verifyOptions(t *testing.T) {
+	tests := []struct {
+		name    string
+		opt     *Opt
+		wantErr bool
+	}{
+		{
+			name:    "base",
+			opt:     &Opt{},
+			wantErr: false,
+		},
+		{
+			name:    "only tcp4",
+			opt:     &Opt{TCP4: true},
+			wantErr: false,
+		},
+		{
+			name:    "only tcp6",
+			opt:     &Opt{TCP6: true},
+			wantErr: false,
+		},
+		{
+			name:    "valid options",
+			opt:     &Opt{VerifySSL: true, SNI: "example.com"},
+			wantErr: false,
+		},
+		{
+			name:    "missing sni",
+			opt:     &Opt{VerifySSL: true, SNI: ""},
+			wantErr: true,
+		},
+		{
+			name:    "both tcp4 and tcp6",
+			opt:     &Opt{TCP4: true, TCP6: true},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.opt.verifyOptions()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("verifyOptions() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
