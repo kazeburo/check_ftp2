@@ -38,15 +38,16 @@ func replaceReplacer(s string) string {
 }
 
 type Opt struct {
-	Timeout  time.Duration `long:"timeout" default:"10s" description:"Timeout to wait for connection"`
-	Hostname string        `short:"H" long:"hostname" description:"IP address or Host name" default:"127.0.0.1"`
-	Port     int           `short:"p" long:"port" description:"Port number" default:"21"`
-	SSL      bool          `short:"S" long:"ssl" description:"use TLS"`
-	SNI      string        `long:"sni" description:"sepecify hostname for SNI"`
-	Explicit bool          `long:"explicit" description:"Use Explicit TLS mode"`
-	TCP4     bool          `short:"4" description:"use tcp4 only"`
-	TCP6     bool          `short:"6" description:"use tcp6 only"`
-	Version  bool          `short:"v" long:"version" description:"Show version"`
+	Timeout   time.Duration `long:"timeout" default:"10s" description:"Timeout to wait for connection"`
+	Hostname  string        `short:"H" long:"hostname" description:"IP address or Host name" default:"127.0.0.1"`
+	Port      int           `short:"p" long:"port" description:"Port number" default:"21"`
+	SSL       bool          `short:"S" long:"ssl" description:"use TLS"`
+	SNI       string        `long:"sni" description:"sepecify hostname for SNI"`
+	Explicit  bool          `long:"explicit" description:"Use Explicit TLS mode"`
+	TCP4      bool          `short:"4" description:"use tcp4 only"`
+	TCP6      bool          `short:"6" description:"use tcp6 only"`
+	VerifySSL bool          `long:"verify-ssl" description:"Verify SSL certificate"`
+	Version   bool          `short:"v" long:"version" description:"Show version"`
 }
 
 func (o *Opt) dialOptions() []ftp.DialOption {
@@ -55,13 +56,10 @@ func (o *Opt) dialOptions() []ftp.DialOption {
 	options = append(options, ftp.DialWithTimeout(o.Timeout))
 
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: !o.VerifySSL,
 	}
 	if o.SNI != "" {
-		tlsConfig = &tls.Config{
-			InsecureSkipVerify: true,
-			ServerName:         o.SNI,
-		}
+		tlsConfig.ServerName = o.SNI
 	}
 
 	if o.Explicit {

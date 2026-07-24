@@ -1,4 +1,4 @@
-module github.com/kazeburo/check_ftp2
+module github.com/monitoring-forge/check_ftp2
 
 go 1.26
 

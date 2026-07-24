@@ -6,13 +6,14 @@ all: check_ftp2
 .PHONY: check_ftp2
 
 check_ftp2: main.go
-	go build $(LDFLAGS) -o check_ftp2 main.go
+	go build $(LDFLAGS) -o check_ftp2
 
 linux: main.go
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o check_ftp2 main.go
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o check_ftp2
 
 check:
-	go test ./...
+	go test -v ./...
+	go test --race ./...
 
 fmt:
 	go fmt ./...
