@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.0.10](https://github.com/monitoring-forge/check_ftp2/compare/v0.0.9...v0.0.10) - 2026-07-24
+
+- ci: bump the dependencies group with 3 updates by @dependabot[bot] in https://github.com/monitoring-forge/check_ftp2/pull/25
+- repository transfer and add verify ssl option by @kazeburo in https://github.com/monitoring-forge/check_ftp2/pull/27
+
 ## [v0.0.9](https://github.com/kazeburo/check_ftp2/compare/v0.0.8...v0.0.9) - 2026-07-10
 
 - ci: bump the dependencies group across 1 directory with 3 updates by @dependabot[bot] in https://github.com/kazeburo/check_ftp2/pull/20
