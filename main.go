@@ -42,7 +42,7 @@ type Opt struct {
 	Hostname  string        `short:"H" long:"hostname" description:"IP address or Host name" default:"127.0.0.1"`
 	Port      int           `short:"p" long:"port" description:"Port number" default:"21"`
 	SSL       bool          `short:"S" long:"ssl" description:"use TLS"`
-	SNI       string        `long:"sni" description:"sepecify hostname for SNI"`
+	SNI       string        `long:"sni" description:"specify hostname for SNI"`
 	Explicit  bool          `long:"explicit" description:"Use Explicit TLS mode"`
 	TCP4      bool          `short:"4" description:"use tcp4 only"`
 	TCP6      bool          `short:"6" description:"use tcp6 only"`
