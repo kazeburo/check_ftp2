@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -17,6 +18,7 @@ import (
 )
 
 var version string
+var commit string
 
 const UNKNOWN = 3
 const CRITICAL = 2
@@ -46,7 +48,7 @@ type Opt struct {
 	Explicit  bool          `long:"explicit" description:"Use Explicit TLS mode"`
 	TCP4      bool          `short:"4" description:"use tcp4 only"`
 	TCP6      bool          `short:"6" description:"use tcp6 only"`
-	VerifySSL bool          `long:"verify-ssl" description:"Verify SSL certificate"`
+	VerifySSL bool          `long:"verify-ssl" description:"Verify SSL certificate, --sni must be specified"`
 	Version   bool          `short:"v" long:"version" description:"Show version"`
 }
 
@@ -176,22 +178,31 @@ func _main() int {
 	psr := flags.NewParser(opt, flags.HelpFlag|flags.PassDoubleDash)
 	_, err := psr.Parse()
 	if opt.Version {
-		fmt.Printf(`%s %s
-Compiler: %s %s
-`,
-			os.Args[0],
+		if commit == "" {
+			commit = "dev"
+		}
+		fmt.Printf(
+			"%s-%s\n%s/%s, %s, %s\n",
+			filepath.Base(os.Args[0]),
 			version,
-			runtime.Compiler,
-			runtime.Version())
+			runtime.GOOS,
+			runtime.GOARCH,
+			runtime.Version(),
+			commit)
 		return OK
 	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		return 1
+		return UNKNOWN
 	}
 
 	if opt.TCP4 && opt.TCP6 {
 		fmt.Printf("Both tcp4 and tcp6 are specified\n")
+		return UNKNOWN
+	}
+
+	if opt.VerifySSL && opt.SNI == "" {
+		fmt.Printf("verify-ssl is specified but sni is not specified\n")
 		return UNKNOWN
 	}
 
