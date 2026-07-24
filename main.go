@@ -169,6 +169,16 @@ func (o *Opt) doConnect() (string, error) {
 	return okMsg, nil
 }
 
+func (o *Opt) verifyOptions() error {
+	if o.VerifySSL && o.SNI == "" {
+		return fmt.Errorf("verify-ssl is specified but sni is not specified")
+	}
+	if o.TCP4 && o.TCP6 {
+		return fmt.Errorf("both tcp4 and tcp6 are specified")
+	}
+	return nil
+}
+
 func main() {
 	os.Exit(_main())
 }
@@ -196,13 +206,8 @@ func _main() int {
 		return UNKNOWN
 	}
 
-	if opt.TCP4 && opt.TCP6 {
-		fmt.Printf("Both tcp4 and tcp6 are specified\n")
-		return UNKNOWN
-	}
-
-	if opt.VerifySSL && opt.SNI == "" {
-		fmt.Printf("verify-ssl is specified but sni is not specified\n")
+	if err := opt.verifyOptions(); err != nil {
+		fmt.Fprintf(os.Stderr, "FTP UNKNOWN: %v\n", err)
 		return UNKNOWN
 	}
 
